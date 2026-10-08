@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f59e0b">
+<meta name="description" content="SoundPay Box - professional payment voice alerts for merchants">
+<link rel="manifest" href="manifest.json">
+<title>SoundPay Box â€” Smart Payment Voice</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f7f8fb;color:#111827;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+.gradient{background:linear-gradient(135deg,#f59e0b,#fb7185,#8b5cf6,#06b6d4);background-size:400% 400%;animation:flow 8s ease infinite}
+@keyframes flow{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.card{background:rgba(255,255,255,.9);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.8);box-shadow:0 16px 40px rgba(15,23,42,.08)}
+.float{animation:float 3s ease-in-out infinite}@keyframes float{50%{transform:translateY(-6px)}}
+.pulse{animation:pulse 1.8s infinite}@keyframes pulse{50%{box-shadow:0 0 0 12px rgba(16,185,129,.08)}}
+.hiddenx{display:none!important}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:100;min-width:280px;max-width:92%;padding:14px 18px;border-radius:16px;color:white;background:#111827;box-shadow:0 18px 50px #0003}
+</style>
+</head>
+<body>
+<header class="gradient text-white sticky top-0 z-40">
+  <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <img id="appLogo" src="icon.svg" class="w-12 h-12 rounded-2xl bg-white/90 p-1 object-cover" alt="SoundPay Box">
+      <div><div id="brandTitle" onclick="handleBrandClick()" class="font-black text-xl cursor-pointer">SoundPay Box</div>
+      <div class="text-xs text-white/85">Smart Payment Voice â€¢ Merchant Edition</div></div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="installBtn" class="hiddenx bg-white text-slate-900 px-3 py-2 rounded-xl text-xs font-bold">Install App</button>
+      <button onclick="openPlans()" class="bg-slate-950/20 border border-white/30 px-3 py-2 rounded-xl text-xs font-bold">Plans</button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto p-4 md:p-6">
+<section class="grid lg:grid-cols-2 gap-6 items-stretch">
+  <div class="gradient rounded-3xl p-7 text-white shadow-2xl">
+    <div class="inline-flex px-3 py-1 rounded-full bg-white/20 text-xs font-bold mb-5">7-DAY FREE TRIAL</div>
+    <h1 class="text-4xl md:text-6xl font-black leading-tight">Hear every payment.<br>Never miss a sale.</h1>
+    <p class="mt-5 text-white/90 max-w-xl">A professional voice payment alert system for shops, counters, restaurants, pharmacies and businesses.</p>
+    <div class="mt-6 flex flex-wrap gap-3">
+      <button onclick="openRegister()" class="bg-white text-slate-900 px-5 py-3 rounded-2xl font-black">Start Free Trial</button>
+      <button onclick="testWelcome()" class="bg-slate-950/20 border border-white/30 px-5 py-3 rounded-2xl font-bold">Test Welcome Voice</button>
+    </div>
+  </div>
+
+  <div class="card rounded-3xl p-6">
+    <div class="flex items-center justify-between"><div><p class="text-xs uppercase font-bold text-slate-500">Subscription</p><h2 id="statusText" class="text-2xl font-black mt-1">Checkingâ€¦</h2></div><div id="statusDot" class="w-4 h-4 rounded-full bg-amber-400 pulse"></div></div>
+    <div class="mt-6 grid grid-cols-2 gap-3">
+      <div class="bg-slate-50 rounded-2xl p-4"><p class="text-xs text-slate-500">Merchant</p><p id="merchantText" class="font-bold truncate">Not registered</p></div>
+      <div class="bg-slate-50 rounded-2xl p-4"><p class="text-xs text-slate-500">Trial / Plan</p><p id="expiryText" class="font-bold">â€”</p></div>
+    </div>
+    <button onclick="openPlans()" class="w-full mt-4 py-3 rounded-2xl bg-slate-900 text-white font-bold">View Subscription Plans</button>
+    <button onclick="openPaymentSetup()" class="w-full mt-2 py-3 rounded-2xl border border-slate-200 font-bold">Merchant QR & Voice Settings</button>
+  </div>
+</section>
+
+<section class="grid md:grid-cols-3 gap-4 mt-6">
+  <div class="card rounded-3xl p-5"><div class="text-3xl">ðŸ”Š</div><h3 class="font-black mt-3">Loud Voice Alerts</h3><p class="text-sm text-slate-500 mt-1">Uses the device's available speech voices and audio output.</p></div>
+  <div class="card rounded-3xl p-5"><div class="text-3xl">ðŸŒ</div><h3 class="font-black mt-3">Global Languages</h3><p class="text-sm text-slate-500 mt-1">Choose from many browser/OS speech languages when available.</p></div>
+  <div class="card rounded-3xl p-5"><div class="text-3xl">ðŸ“²</div><h3 class="font-black mt-3">Installable PWA</h3><p class="text-sm text-slate-500 mt-1">Install on supported phones and use it like an application.</p></div>
+</section>
+
+<section class="card rounded-3xl p-6 mt-6">
+  <div class="flex items-center justify-between gap-3"><div><p class="text-xs uppercase font-bold text-slate-500">Live payment monitor</p><h2 class="text-2xl font-black">Latest payment</h2></div><span id="liveBadge" class="px-3 py-1 rounded-full bg-slate-100 text-xs font-bold">Waiting</span></div>
+  <div class="mt-5 bg-emerald-50 border border-emerald-100 rounded-3xl p-6 text-center">
+    <div id="paymentAmount" class="text-5xl font-black text-emerald-700">â‚¹0.00</div>
+    <div id="paymentMessage" class="mt-2 text-sm font-semibold text-emerald-700">No payment received yet.</div>
+  </div>
+  <button onclick="testPayment()" class="mt-4 w-full py-3 rounded-2xl bg-emerald-600 text-white font-black">Test Payment Voice</button>
+</section>
+
+<section class="card rounded-3xl p-6 mt-6">
+  <h2 class="text-xl font-black">Voice & Device Access</h2>
+  <p class="text-sm text-slate-500 mt-1">Grant only the permissions supported by your browser/device. Browsers cannot legally or technically grant every permission automatically.</p>
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+    <button onclick="requestNotifications()" class="p-3 rounded-2xl bg-slate-100 font-bold text-sm">Enable Notifications</button>
+    <button onclick="requestAudio()" class="p-3 rounded-2xl bg-slate-100 font-bold text-sm">Enable Audio</button>
+    <button onclick="requestWakeLock()" class="p-3 rounded-2xl bg-slate-100 font-bold text-sm">Keep Screen Awake</button>
+    <button onclick="testSpeech()" class="p-3 rounded-2xl bg-slate-100 font-bold text-sm">Test Speech</button>
+  </div>
+  <p id="permissionStatus" class="text-xs text-slate-500 mt-4">Checking browser capabilitiesâ€¦</p>
+</section>
+
+<section class="card rounded-3xl p-6 mt-6">
+  <h2 class="text-xl font-black">Merchant Information</h2>
+  <div class="grid md:grid-cols-3 gap-3 mt-4">
+    <input id="merchantName" class="p-3 rounded-2xl border" placeholder="Business / Merchant Name">
+    <input id="merchantPhone" class="p-3 rounded-2xl border" placeholder="Phone Number">
+    <input id="merchantUpi" class="p-3 rounded-2xl border" placeholder="Merchant UPI ID">
+  </div>
+  <button onclick="saveMerchant()" class="mt-3 px-5 py-3 rounded-2xl bg-slate-900 text-white font-bold">Save Merchant Profile</button>
+</section>
+</main>
+
+<!-- Registration -->
+<div id="registerModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hiddenx z-50 p-4 overflow-y-auto">
+<div class="min-h-full flex items-center justify-center"><div class="bg-white rounded-3xl max-w-lg w-full p-6">
+<h2 class="text-2xl font-black">Start Your 7-Day Free Trial</h2><p class="text-sm text-slate-500 mt-1">Registration activates a 7-day trial automatically.</p>
+<div class="space-y-3 mt-5">
+<input id="regName" class="w-full p-3 rounded-2xl border" placeholder="Full Name">
+<input id="regBusiness" class="w-full p-3 rounded-2xl border" placeholder="Business Name">
+<input id="regPhone" class="w-full p-3 rounded-2xl border" placeholder="Phone Number">
+</div>
+<div class="flex gap-2 mt-5"><button onclick="registerMerchant()" class="flex-1 bg-slate-900 text-white py-3 rounded-2xl font-black">Activate Free Trial</button><button onclick="closeModal('registerModal')" class="px-5 rounded-2xl bg-slate-100 font-bold">Close</button></div>
+</div></div></div>
+
+<!-- Plans -->
+<div id="plansModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hiddenx z-50 p-4 overflow-y-auto">
+<div class="min-h-full flex items-center justify-center"><div class="bg-white rounded-3xl max-w-4xl w-full p-6">
+<div class="flex justify-between"><div><h2 class="text-2xl font-black">Subscription Plans</h2><p class="text-sm text-slate-500">Your first 7 days are free.</p></div><button onclick="closeModal('plansModal')" class="text-2xl">Ã—</button></div>
+<div id="plansGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-5"></div>
+</div></div></div>
+
+<!-- Payment -->
+<div id="paymentModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hiddenx z-50 p-4 overflow-y-auto">
+<div class="min-h-full flex items-center justify-center"><div class="bg-white rounded-3xl max-w-lg w-full p-6">
+<div class="flex justify-between"><div><h2 class="text-2xl font-black">Recharge Subscription</h2><p id="selectedPlanText" class="text-sm text-slate-500"></p></div><button onclick="closeModal('paymentModal')" class="text-2xl">Ã—</button></div>
+<div class="mt-5 bg-amber-50 rounded-3xl p-5 text-center"><div id="adminQr" class="flex justify-center"></div><p id="adminUpiText" class="font-black mt-3">Payment QR will appear here</p><p class="text-xs text-slate-500 mt-1">Pay using your UPI app, then upload the payment proof below.</p></div>
+<div class="space-y-3 mt-5">
+<input id="payPhone" class="w-full p-3 rounded-2xl border" placeholder="Your phone number">
+<input id="payTxn" class="w-full p-3 rounded-2xl border" placeholder="Transaction / UTR (optional)">
+<input id="payScreenshot" type="file" accept="image/*" class="w-full p-3 rounded-2xl border">
+</div>
+<button onclick="submitPaymentRequest()" class="w-full mt-4 bg-slate-900 text-white py-3 rounded-2xl font-black">Submit Payment for Admin Approval</button>
+</div></div></div>
+
+<!-- Settings -->
+<div id="settingsModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hiddenx z-50 p-4 overflow-y-auto">
+<div class="min-h-full flex items-center justify-center"><div class="bg-white rounded-3xl max-w-lg w-full p-6">
+<div class="flex justify-between"><h2 class="text-2xl font-black">Merchant QR & Voice</h2><button onclick="closeModal('settingsModal')" class="text-2xl">Ã—</button></div>
+<select id="voiceLang" class="w-full p-3 rounded-2xl border mt-5"></select>
+<button onclick="generateMerchantQr()" class="w-full mt-3 py-3 rounded-2xl bg-indigo-600 text-white font-bold">Generate My Payment QR</button>
+<div id="merchantQrBox" class="mt-4 text-center hiddenx"><div id="merchantQr" class="flex justify-center"></div><p id="merchantQrName" class="font-black mt-2"></p><p id="merchantQrUpi" class="text-xs text-slate-500"></p></div>
+</div></div></div>
+
+<!-- Admin -->
+<div id="adminModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hiddenx z-[60] p-4 overflow-y-auto">
+<div class="min-h-full flex items-center justify-center"><div class="bg-white rounded-3xl max-w-6xl w-full p-6">
+<div class="flex justify-between items-center"><div><h2 class="text-2xl font-black">Admin Dashboard</h2><p class="text-sm text-slate-500">Merchant, subscription and payment management</p></div><button onclick="closeModal('adminModal')" class="text-2xl">Ã—</button></div>
+<div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-5">
+<div class="bg-indigo-50 p-4 rounded-2xl"><p class="text-xs">Merchants</p><b id="statMerchants" class="text-2xl">0</b></div>
+<div class="bg-emerald-50 p-4 rounded-2xl"><p class="text-xs">Active</p><b id="statActive" class="text-2xl">0</b></div>
+<div class="bg-amber-50 p-4 rounded-2xl"><p class="text-xs">Pending Payments</p><b id="statPending" class="text-2xl">0</b></div>
+<div class="bg-rose-50 p-4 rounded-2xl"><p class="text-xs">Approved Revenue</p><b id="statRevenue" class="text-2xl">â‚¹0</b></div>
+</div>
+<div class="grid lg:grid-cols-2 gap-5 mt-5">
+<div class="border rounded-3xl p-5"><h3 class="font-black">Admin Payment Settings</h3>
+<input id="adminUpi" class="w-full p-3 border rounded-2xl mt-3" placeholder="Company UPI ID">
+<input id="adminMerchant" class="w-full p-3 border rounded-2xl mt-3" placeholder="Company / Payee Name">
+<input id="adminPasswordInput" type="password" class="w-full p-3 border rounded-2xl mt-3" placeholder="Change admin password">
+<button onclick="saveAdminSettings()" class="w-full mt-3 bg-slate-900 text-white py-3 rounded-2xl font-bold">Save Settings</button>
+</div>
+<div class="border rounded-3xl p-5"><h3 class="font-black">Plan Pricing</h3><div id="adminPlans" class="space-y-2 mt-3"></div><button onclick="savePlanPrices()" class="w-full mt-3 bg-indigo-600 text-white py-3 rounded-2xl font-bold">Save Plan Prices</button></div>
+</div>
+<div class="border rounded-3xl p-5 mt-5"><h3 class="font-black">Pending Payment Approvals</h3><div id="pendingList" class="mt-3 space-y-3"></div></div>
+<div class="border rounded-3xl p-5 mt-5"><h3 class="font-black">Merchant Status</h3><div id="merchantList" class="mt-3 space-y-2"></div></div>
+</div></div></div>
+
+<div id="toast" class="toast hiddenx"></div>
+
+<script>
+const firebaseConfig={apiKey:"YOUR_API_KEY",authDomain:"YOUR_PROJECT.firebaseapp.com",databaseURL:"https://YOUR_PROJECT-default-rtdb.firebaseio.com",projectId:"YOUR_PROJECT",storageBucket:"YOUR_PROJECT.appspot.com",messagingSenderId:"YOUR_SENDER_ID",appId:"YOUR_APP_ID"};
+let db=null;
+try{if(firebaseConfig.apiKey!=="YOUR_API_KEY"){firebase.initializeApp(firebaseConfig);db=firebase.database();}}catch(e){console.warn(e)}
+const DEFAULT_PLANS=[
+ {days:1,name:"1 Day",price:10},{days:7,name:"7 Days",price:29},{days:15,name:"15 Days",price:49},
+ {days:30,name:"Monthly",price:99},{days:90,name:"3 Months",price:249},{days:180,name:"6 Months",price:449},{days:365,name:"1 Year",price:799}
+];
+const LANGS=[
+["en-US","English"],["hi-IN","Hindi"],["bn-IN","Bengali"],["ur-PK","Urdu"],["ta-IN","Tamil"],["te-IN","Telugu"],["kn-IN","Kannada"],["ml-IN","Malayalam"],["mr-IN","Marathi"],["gu-IN","Gujarati"],["pa-IN","Punjabi"],["or-IN","Odia"],["as-IN","Assamese"],["ne-NP","Nepali"],["si-LK","Sinhala"],["ar-SA","Arabic"],["fr-FR","French"],["de-DE","German"],["es-ES","Spanish"],["it-IT","Italian"],["pt-PT","Portuguese"],["ru-RU","Russian"],["ja-JP","Japanese"],["ko-KR","Korean"],["zh-CN","Chinese"],["th-TH","Thai"],["id-ID","Indonesian"],["tr-TR","Turkish"]
+];
+let state={merchant:null,plans:DEFAULT_PLANS,adminUpi:"",adminMerchant:"SoundPay Box",adminPassword:"7876482550000",deferredInstall:null,selectedPlan:null};
+const $=id=>document.getElementById(id);
+function toast(m){$("toast").textContent=m;$("toast").classList.remove("hiddenx");setTimeout(()=>$("toast").classList.add("hiddenx"),3200)}
+function closeModal(id){$(id).classList.add("hiddenx")}
+function openRegister(){$("registerModal").classList.remove("hiddenx")}
+function getMerchant(){try{return JSON.parse(localStorage.getItem("sp_merchant")||"null")}catch{return null}}
+function saveLocal(){localStorage.setItem("sp_merchant",JSON.stringify(state.merchant));localStorage.setItem("sp_plans",JSON.stringify(state.plans));localStorage.setItem("sp_settings",JSON.stringify({adminUpi:state.adminUpi,adminMerchant:state.adminMerchant,adminPassword:state.adminPassword}))}
+function loadLocal(){state.merchant=getMerchant();try{state.plans=JSON.parse(localStorage.getItem("sp_plans"))||DEFAULT_PLANS}catch{}try{let x=JSON.parse(localStorage.getItem("sp_settings")||"{}");state.adminUpi=x.adminUpi||"";state.adminMerchant=x.adminMerchant||"SoundPay Box";state.adminPassword=x.adminPassword||"7876482550000"}catch{}}
+function registerMerchant(){
+ const name=$("regName").value.trim(),business=$("regBusiness").value.trim(),phone=$("regPhone").value.trim();
+ if(!name||!business||!phone)return toast("Please complete all registration fields.");
+ const start=new Date(),expiry=new Date(start);expiry.setDate(expiry.getDate()+7);
+ state.merchant={id:"M"+Date.now(),name,business,phone,upi:"",trial:true,active:true,start:start.toISOString(),expiry:expiry.toISOString(),createdAt:start.toISOString()};
+ saveLocal(); if(db)db.ref("merchants/"+state.merchant.id).set(state.merchant);
+ closeModal("registerModal"); updateUI(); welcomeVoice(); toast("7-day free trial activated.");
+}
+function updateUI(){
+ const m=state.merchant;
+ $("merchantText").textContent=m?m.business:"Not registered";
+ if(!m){$("statusText").textContent="Not Activated";$("expiryText").textContent="Register for 7 days free";return}
+ const d=new Date(m.expiry),now=new Date(),days=Math.max(0,Math.ceil((d-now)/86400000));
+ if(d>now&&m.active){$("statusText").textContent=m.trial?"7-Day Free Trial Active":"Subscription Active";$("statusDot").className="w-4 h-4 rounded-full bg-emerald-500 pulse";$("expiryText").textContent=days+" days left"}
+ else{$("statusText").textContent="Subscription Expired";$("statusDot").className="w-4 h-4 rounded-full bg-rose-500";$("expiryText").textContent="Renew to continue"}
+ $("merchantName").value=m.business||"";$("merchantPhone").value=m.phone||"";$("merchantUpi").value=m.upi||"";
+}
+function openPlans(){renderPlans();$("plansModal").classList.remove("hiddenx")}
+function renderPlans(){
+ $("plansGrid").innerHTML=state.plans.map((p,i)=>`<div class="border rounded-3xl p-5 ${p.days===30?"ring-2 ring-amber-400":""}"><div class="text-xs font-black text-indigo-600">${p.days===30?"MOST POPULAR":"SUBSCRIPTION"}</div><h3 class="text-xl font-black mt-2">${p.name}</h3><div class="text-3xl font-black mt-2">â‚¹${p.price}</div><p class="text-xs text-slate-500 mt-1">${p.days} days access</p><button onclick="selectPlan(${i})" class="w-full mt-4 bg-slate-900 text-white py-3 rounded-2xl font-bold">Choose Plan</button></div>`).join("");
+}
+function selectPlan(i){state.selectedPlan=state.plans[i];$("selectedPlanText").textContent=`${state.selectedPlan.name} â€¢ â‚¹${state.selectedPlan.price}`;renderAdminQr();closeModal("plansModal");$("paymentModal").classList.remove("hiddenx")}
+function renderAdminQr(){const box=$("adminQr");box.innerHTML="";if(!state.adminUpi){$("adminUpiText").textContent="Admin UPI is not configured yet.";return}new QRCode(box,{text:`upi://pay?pa=${encodeURIComponent(state.adminUpi)}&pn=${encodeURIComponent(state.adminMerchant)}&cu=INR&am=${state.selectedPlan?state.selectedPlan.price:""}`,width:190,height:190});$("adminUpiText").textContent=`Pay to ${state.adminMerchant} â€¢ ${state.adminUpi}`}
+function submitPaymentRequest(){
+ if(!state.merchant)return toast("Please register first.");
+ if(!state.selectedPlan)return toast("Choose a plan first.");
+ const phone=$("payPhone").value.trim(),txn=$("payTxn").value.trim(),file=$("payScreenshot").files[0];
+ if(!phone||!file)return toast("Phone number and payment screenshot are required.");
+ const reader=new FileReader();reader.onload=async e=>{
+ const req={id:"R"+Date.now(),merchantId:state.merchant.id,merchantName:state.merchant.business,phone,txn,plan:state.selectedPlan,screenshot:e.target.result,status:"pending",createdAt:new Date().toISOString()};
+ if(db)await db.ref("paymentRequests/"+req.id).set(req);else{let a=JSON.parse(localStorage.getItem("sp_pending")||"[]");a.push(req);localStorage.setItem("sp_pending",JSON.stringify(a))}
+ closeModal("paymentModal");toast("Payment submitted. Waiting for admin approval.");
+ };reader.readAsDataURL(file);
+}
+function saveMerchant(){
+ if(!state.merchant)return openRegister();
+ state.merchant.business=$("merchantName").value.trim()||state.merchant.business;state.merchant.phone=$("merchantPhone").value.trim()||state.merchant.phone;state.merchant.upi=$("merchantUpi").value.trim();
+ saveLocal();if(db)db.ref("merchants/"+state.merchant.id).update(state.merchant);updateUI();toast("Merchant profile saved.");
+}
+function openPaymentSetup(){$("voiceLang").innerHTML=LANGS.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("");$("settingsModal").classList.remove("hiddenx")}
+function generateMerchantQr(){
+ const upi=$("merchantUpi").value.trim()||state.merchant?.upi,name=$("merchantName").value.trim()||state.merchant?.business;
+ if(!upi||!name)return toast("Save your merchant UPI and business name first.");
+ const box=$("merchantQr");box.innerHTML="";new QRCode(box,{text:`upi://pay?pa=${encodeURIComponent(upi)}&pn=${encodeURIComponent(name)}&cu=INR`,width:210,height:210});
+ $("merchantQrName").textContent=name;$("merchantQrUpi").textContent=upi;$("merchantQrBox").classList.remove("hiddenx");
+}
+function voice(text,lang="en-US"){if(!("speechSynthesis"in window))return toast("Speech synthesis is not supported on this device/browser.");window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=lang;u.rate=.9;u.volume=1;u.pitch=1;const voices=window.speechSynthesis.getVoices();const v=voices.find(x=>x.lang.toLowerCase().startsWith(lang.toLowerCase().split("-")[0]));if(v)u.voice=v;window.speechSynthesis.speak(u)}
+function welcomeVoice(){
+ const m=state.merchant?.business||"your business";
+ voice(`Welcome to SoundPay Box. ${m} is now connected. Receive payments safely and enjoy clear payment voice alerts.`,"en-US");
+ setTimeout(()=>voice(`SoundPay Box à¤®à¥‡à¤‚ à¤†à¤ªà¤•à¤¾ à¤¸à¥à¤µà¤¾à¤—à¤¤ à¤¹à¥ˆà¥¤ ${m} à¤•à¥‡ à¤²à¤¿à¤ à¤­à¥à¤—à¤¤à¤¾à¤¨ à¤¸à¤«à¤² à¤¹à¥‹à¤¨à¥‡ à¤ªà¤° à¤¸à¥à¤ªà¤·à¥à¤Ÿ à¤†à¤µà¤¾à¤œà¤¼ à¤®à¥‡à¤‚ à¤¸à¥‚à¤šà¤¨à¤¾ à¤ªà¥à¤°à¤¾à¤ªà¥à¤¤ à¤•à¤°à¥‡à¤‚à¥¤`,"hi-IN"),3300);
+ setTimeout(()=>voice(`à¦¸à¦¾à¦‰à¦¨à§à¦¡à¦ªà§‡ à¦¬à¦•à§à¦¸à§‡ à¦†à¦ªà¦¨à¦¾à¦•à§‡ à¦¸à§à¦¬à¦¾à¦—à¦¤à¦®à¥¤ ${m} à¦¬à§à¦¯à¦¬à¦¸à¦¾à¦° à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦¸à¦«à¦² à¦¹à¦²à§‡ à¦ªà¦°à¦¿à¦·à§à¦•à¦¾à¦° à¦­à¦¯à¦¼à§‡à¦¸ à¦…à§à¦¯à¦¾à¦²à¦¾à¦°à§à¦Ÿ à¦¶à§à¦¨à§à¦¨à¥¤`,"bn-IN"),6600);
+}
+function testWelcome(){welcomeVoice()}
+function testSpeech(){voice("This is a professional SoundPay Box voice test. Your payment alert system is ready.","en-US")}
+function testPayment(){handlePayment({amount:250,merchantName:state.merchant?.business||"your business",customerName:"Customer",lang:$("voiceLang")?.value||"en-US"})}
+function handlePayment(data){
+ const amount=Number(data.amount||0).toFixed(2),merchant=data.merchantName||state.merchant?.business||"your business",customer=data.customerName||"customer",lang=data.lang||"en-US";
+ $("paymentAmount").textContent="â‚¹"+amount;$("paymentMessage").textContent=`Payment received at ${merchant} from ${customer}`;$("liveBadge").textContent="Payment Received";$("liveBadge").className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold";
+ const texts={ "en-US":`Payment received at ${merchant}. ${amount} rupees received from ${customer}. Thank you.`,"hi-IN":`${merchant} à¤®à¥‡à¤‚ à¤­à¥à¤—à¤¤à¤¾à¤¨ à¤ªà¥à¤°à¤¾à¤ªà¥à¤¤ à¤¹à¥à¤†à¥¤ ${customer} à¤¸à¥‡ ${amount} à¤°à¥à¤ªà¤¯à¥‡ à¤ªà¥à¤°à¤¾à¤ªà¥à¤¤ à¤¹à¥à¤à¥¤ à¤§à¤¨à¥à¤¯à¤µà¤¾à¤¦à¥¤`,"bn-IN":`${merchant}-à¦ à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ à¦à¦¸à§‡à¦›à§‡à¥¤ ${customer}-à¦à¦° à¦•à¦¾à¦› à¦¥à§‡à¦•à§‡ ${amount} à¦Ÿà¦¾à¦•à¦¾ à¦ªà¦¾à¦“à¦¯à¦¼à¦¾ à¦—à§‡à¦›à§‡à¥¤ à¦§à¦¨à§à¦¯à¦¬à¦¾à¦¦à¥¤`};
+ voice(texts[lang]||texts["en-US"],lang);
+ if("Notification"in window&&Notification.permission==="granted")new Notification("Payment Received",{body:`â‚¹${amount} received at ${merchant}`,icon:$("appLogo").src});
+}
+function requestNotifications(){if(!("Notification"in window))return toast("Notifications are not supported.");Notification.requestPermission().then(x=>toast("Notification permission: "+x))}
+async function requestAudio(){try{const C=window.AudioContext||window.webkitAudioContext;if(C){const c=new C();await c.resume();const o=c.createOscillator();o.connect(c.destination);o.start();o.stop(c.currentTime+.15);toast("Audio access activated.")}}catch(e){toast("Audio activation was blocked by the browser.")}}
+async function requestWakeLock(){try{if(!("wakeLock"in navigator))return toast("Wake Lock is not supported.");await navigator.wakeLock.request("screen");toast("Screen wake lock enabled while this page is active.")}catch(e){toast("Wake Lock permission was not granted.")}}
+function handleBrandClick(){let n=Number(sessionStorage.getItem("brandClicks")||0)+1;sessionStorage.setItem("brandClicks",n);clearTimeout(window.bt);window.bt=setTimeout(()=>sessionStorage.setItem("brandClicks","0"),1800);if(n>=5){sessionStorage.setItem("brandClicks","0");const p=prompt("Admin password");if(p===state.adminPassword)openAdmin();else if(p!==null)toast("Incorrect admin password.")}}
+function openAdmin(){renderAdmin();$("adminModal").classList.remove("hiddenx")}
+function renderAdmin(){
+ $("adminUpi").value=state.adminUpi;$("adminMerchant").value=state.adminMerchant;
+ $("adminPlans").innerHTML=state.plans.map((p,i)=>`<div class="flex gap-2"><input id="pname${i}" class="flex-1 p-2 border rounded-xl" value="${p.name}"><input id="pprice${i}" type="number" class="w-28 p-2 border rounded-xl" value="${p.price}"></div>`).join("");
+ let pending=JSON.parse(localStorage.getItem("sp_pending")||"[]");$("pendingList").innerHTML=pending.length?pending.map(r=>`<div class="border rounded-2xl p-4"><div class="font-bold">${r.merchantName} â€¢ ${r.plan.name} â€¢ â‚¹${r.plan.price}</div><div class="text-xs text-slate-500">${r.phone} â€¢ ${r.txn||"No UTR"}</div><img src="${r.screenshot}" class="w-24 h-24 object-cover rounded-xl mt-2"><div class="flex gap-2 mt-2"><button onclick="approveLocal('${r.id}')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold">Approve</button><button onclick="rejectLocal('${r.id}')" class="bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-bold">Reject</button></div></div>`).join(""):"<p class='text-sm text-slate-500'>No pending requests.</p>";
+ $("merchantList").innerHTML=state.merchant?`<div class="p-4 rounded-2xl bg-slate-50"><b>${state.merchant.business}</b><div class="text-xs text-slate-500">${state.merchant.phone} â€¢ ${state.merchant.active?"Active":"Inactive"} â€¢ Expires ${new Date(state.merchant.expiry).toLocaleDateString()}</div></div>`:"No local merchant";
+ $("statMerchants").textContent=state.merchant?1:0;$("statActive").textContent=state.merchant&&state.merchant.active&&new Date(state.merchant.expiry)>new Date()?1:0;$("statPending").textContent=pending.length;$("statRevenue").textContent="â‚¹"+pending.filter(x=>x.status==="approved").reduce((a,x)=>a+Number(x.plan.price),0);
+}
+function saveAdminSettings(){state.adminUpi=$("adminUpi").value.trim();state.adminMerchant=$("adminMerchant").value.trim()||"SoundPay Box";const np=$("adminPasswordInput").value.trim();if(np)state.adminPassword=np;saveLocal();toast("Admin settings saved.");renderAdmin()}
+function savePlanPrices(){state.plans=state.plans.map((p,i)=>({...p,name:$("pname"+i).value||p.name,price:Number($("pprice"+i).value)||p.price}));saveLocal();toast("Plan pricing saved.");renderAdmin()}
+function approveLocal(id){let a=JSON.parse(localStorage.getItem("sp_pending")||"[]"),r=a.find(x=>x.id===id);if(!r)return;let m=state.merchant;if(m&&m.id===r.merchantId){let base=new Date(m.expiry)>new Date()?new Date(m.expiry):new Date();base.setDate(base.getDate()+r.plan.days);m.expiry=base.toISOString();m.active=true;m.trial=false;state.merchant=m;saveLocal()}a=a.filter(x=>x.id!==id);localStorage.setItem("sp_pending",JSON.stringify(a));toast("Payment approved and subscription activated.");renderAdmin();updateUI()}
+function rejectLocal(id){let a=JSON.parse(localStorage.getItem("sp_pending")||"[]").filter(x=>x.id!==id);localStorage.setItem("sp_pending",JSON.stringify(a));renderAdmin();toast("Payment request rejected.")}
+function initFirebase(){
+ if(!db)return;
+ db.ref("payments/latest").on("value",s=>{const d=s.val();if(d&&d.amount)handlePayment(d)});
+ db.ref("settings/admin").on("value",s=>{const d=s.val();if(d){state.adminUpi=d.upi||state.adminUpi;state.adminMerchant=d.merchant||state.adminMerchant;saveLocal()}});
+}
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();state.deferredInstall=e;$("installBtn").classList.remove("hiddenx")});
+$("installBtn").onclick=async()=>{if(state.deferredInstall){state.deferredInstall.prompt();await state.deferredInstall.userChoice;state.deferredInstall=null;$("installBtn").classList.add("hiddenx")}};
+window.addEventListener("load",()=>{
+ loadLocal();updateUI();$("voiceLang").innerHTML=LANGS.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join("");
+ $("permissionStatus").textContent=`Speech: ${"speechSynthesis"in window?"supported":"not supported"} â€¢ Notifications: ${"Notification"in window?"supported":"not supported"} â€¢ PWA: ${"serviceWorker"in navigator?"supported":"not supported"}`;
+ initFirebase();
+ if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+});
+</script>
+</body></html>
